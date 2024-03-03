@@ -1,4 +1,12 @@
 {
+  "name": "express_practice",
+  "author": {
+    "name": "Seungrok Yoon",
+    "email": "sonicrok93@gmail.com"
+  },
+  "scripts": {
+    "dev": "node app.js"
+  },
   "dependencies": {
     "express": "^4.18.3"
   }
