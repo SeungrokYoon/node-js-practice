@@ -7,9 +7,14 @@ const port = 5500;
 app.use(express.static(path.join(__dirname, "./html")));
 
 /**
- * @description bodyParser.urlencoded extended false는
+ * @description bodyParser.urlencoded extended false이 줄을 지우면 body가 제대로 파싱이 되지 않는다. 그 이유는?
+ * application/application/x-www-form-urlencoded 파싱
  */
-// app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded());
+
+/**
+ * @description application/json 파싱
+ * */
 app.use(bodyParser.json());
 
 /**
