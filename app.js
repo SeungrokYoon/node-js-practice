@@ -1,13 +1,19 @@
 const path = require("path");
 const express = require("express");
 const bodyParser = require("body-parser");
+const morgan = require("morgan");
+
 const app = express();
 const port = 5500;
 
+app.use(morgan("combined"));
+app.use(morgan("common"));
+app.use(morgan(":method + :date"));
+app.use(morgan(":status + :url"));
 app.use(express.static(path.join(__dirname, "./html")));
 
 /**
- * @description bodyParser.urlencoded extended false이 줄을 지우면 body가 제대로 파싱이 되지 않는다. 그 이유는?
+ * @description bodyParser.urlegincoded extended false이 줄을 지우면 body가 제대로 파싱이 되지 않는다. 그 이유는?
  * application/application/x-www-form-urlencoded 파싱
  */
 app.use(bodyParser.urlencoded());
