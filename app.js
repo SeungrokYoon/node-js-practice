@@ -2,14 +2,14 @@ const path = require("path");
 const express = require("express");
 const bodyParser = require("body-parser");
 const morgan = require("morgan");
+const cookieParser = require("cookie-parser");
 
 const app = express();
 const port = 5500;
 
 app.use(morgan("combined"));
 app.use(morgan("common"));
-app.use(morgan(":method + :date"));
-app.use(morgan(":status + :url"));
+app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "./html")));
 
 /**
@@ -27,7 +27,6 @@ app.use(bodyParser.json());
  * 미들웨어를 여러개를 순차적으로 엮을 수 있다.
  */
 app.use((request, response, next) => {
-  console.log(request.body);
   console.log("first middleware");
   request.user1 = "승록";
   next();
@@ -40,12 +39,25 @@ app.use((request, response, next) => {
 });
 
 app.use((request, response, next) => {
-  console.log("third middleware");
+  // middleware for handling cookie
+  const cookie = request.cookies;
+  console.log(cookie);
   next();
 });
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "./html/index.html"));
+});
+
+app.get("/set-cookie", (req, res) => {
+  console.log("SET cookie");
+  res.cookie("user", {
+    id: "0001",
+    name: "seungrok",
+    authorized: true,
+    created_at: new Date().toDateString(),
+  });
+  res.redirect("/");
 });
 
 app.get("/login", (req, res) => {
