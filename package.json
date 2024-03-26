@@ -8,6 +8,7 @@
     "dev": "nodemon app.js"
   },
   "dependencies": {
+    "connect-multiparty": "^2.2.0",
     "cookie-parser": "^1.4.6",
     "express": "^4.18.3",
     "morgan": "^1.10.0"

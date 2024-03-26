@@ -1,14 +1,15 @@
 const path = require("path");
+const fs = require("fs");
 const express = require("express");
 const bodyParser = require("body-parser");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
+const multipart = require("connect-multiparty");
 
 const app = express();
 const port = 5500;
 
 app.use(morgan("combined"));
-app.use(morgan("common"));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "./html")));
 
@@ -50,7 +51,6 @@ app.get("/", (req, res) => {
 });
 
 app.get("/set-cookie", (req, res) => {
-  console.log("SET cookie");
   res.cookie("user", {
     id: "0001",
     name: "seungrok",
@@ -77,6 +77,32 @@ app.post("/login", (req, res) => {
     password,
   };
   res.json(jsonData);
+});
+
+app.get("/multipart", (req, res) => {
+  fs.readFile(
+    path.join(__dirname, "./html/connect-multiparty.html"),
+    (err, data) => {
+      if (err) throw err;
+      res.send(data.toString());
+    }
+  );
+});
+
+app.use(multipart({ uploadDir: `${__dirname}/upload` }));
+app.post("/multipart", (req, res) => {
+  const imgFile = req.files.image;
+  console.log(req.body, req.files);
+  console.log(__dirname);
+  const outputPath = `${__dirname}/upload/${Date.now()}_${imgFile.name}`;
+  try {
+    fs.renameSync(imgFile.path, outputPath);
+    console.log("File uploaded successfully");
+  } catch (error) {
+    console.error("Error renaming file:", error);
+    return res.status(500).send("Error uploading file");
+  }
+  res.redirect("/");
 });
 
 app.get("/error", (req, res) => {
