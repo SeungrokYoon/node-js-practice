@@ -5,6 +5,21 @@ const bodyParser = require("body-parser");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const multipart = require("connect-multiparty");
+const session = require("express-session");
+const PostgresSessionStore = require("connect-session-knex");
+
+const knex_client = require("knex")({
+  client: "pg",
+  connection: {
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PW,
+    database: process.env.DB_NAME,
+  },
+});
+
+const sessionStore = "";
 
 const app = express();
 const port = 5500;
@@ -17,7 +32,7 @@ app.use(express.static(path.join(__dirname, "./html")));
  * @description bodyParser.urlegincoded extended false이 줄을 지우면 body가 제대로 파싱이 되지 않는다. 그 이유는?
  * application/application/x-www-form-urlencoded 파싱
  */
-app.use(bodyParser.urlencoded());
+app.use(bodyParser.urlencoded({ extended: false }));
 
 /**
  * @description application/json 파싱
@@ -92,8 +107,6 @@ app.get("/multipart", (req, res) => {
 app.use(multipart({ uploadDir: `${__dirname}/upload` }));
 app.post("/multipart", (req, res) => {
   const imgFile = req.files.image;
-  console.log(req.body, req.files);
-  console.log(__dirname);
   const outputPath = `${__dirname}/upload/${Date.now()}_${imgFile.name}`;
   try {
     fs.renameSync(imgFile.path, outputPath);
