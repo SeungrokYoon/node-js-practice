@@ -1,23 +1,69 @@
 const path = require("path");
 const fs = require("fs");
 const express = require("express");
+const parseurl = require("parseurl");
 const bodyParser = require("body-parser");
 const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const multipart = require("connect-multiparty");
+const session = require("express-session");
+const connectSessionKnex = require("connect-session-knex");
+
+const knex = require("knex")({
+  client: "pg",
+  connection: {
+    host: "localhost",
+    port: 5432,
+    user: "postgres",
+    password: "0000",
+    database: "test-db",
+  },
+  debug: true,
+  pool: {
+    max: 10,
+  },
+  acquireConnectionTimeout: 60000,
+});
+
+const KnexSessionStore = connectSessionKnex(session);
+
+const sessionStore = new KnexSessionStore({
+  knex,
+  tablename: "sessions",
+});
 
 const app = express();
 const port = 5500;
 
 app.use(morgan("combined"));
 app.use(cookieParser());
+app.use(
+  session({
+    secret: "secret-key",
+    resave: false,
+    saveUninitialized: false,
+    store: sessionStore,
+  })
+);
+
+// 세션을 통해 페이지 요청 횟수 관리하기
+app.use((req, res, next) => {
+  if (!req.session.views) {
+    req.session.views = {};
+  }
+  console.log(req);
+  const pathname = parseurl(req).pathname;
+  req.session.views[pathname] = (req.session.views[pathname] || 0) + 1;
+  next();
+});
+
 app.use(express.static(path.join(__dirname, "./html")));
 
 /**
  * @description bodyParser.urlegincoded extended false이 줄을 지우면 body가 제대로 파싱이 되지 않는다. 그 이유는?
  * application/application/x-www-form-urlencoded 파싱
  */
-app.use(bodyParser.urlencoded());
+app.use(bodyParser.urlencoded({ extended: false }));
 
 /**
  * @description application/json 파싱
@@ -48,6 +94,18 @@ app.use((request, response, next) => {
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "./html/index.html"));
+});
+
+app.get("/puddle", (req, res) => {
+  res.send(
+    `Hello puddle! you viewed this page ${req.session.views["/puddle"]} times`
+  );
+});
+
+app.get("/biggle", (req, res) => {
+  res.send(
+    `Hello puddle! you viewed this page ${req.session.views["/biggle"]} times`
+  );
 });
 
 app.get("/set-cookie", (req, res) => {
@@ -92,8 +150,6 @@ app.get("/multipart", (req, res) => {
 app.use(multipart({ uploadDir: `${__dirname}/upload` }));
 app.post("/multipart", (req, res) => {
   const imgFile = req.files.image;
-  console.log(req.body, req.files);
-  console.log(__dirname);
   const outputPath = `${__dirname}/upload/${Date.now()}_${imgFile.name}`;
   try {
     fs.renameSync(imgFile.path, outputPath);
