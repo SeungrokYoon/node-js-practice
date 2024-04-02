@@ -7,20 +7,30 @@ const morgan = require("morgan");
 const cookieParser = require("cookie-parser");
 const multipart = require("connect-multiparty");
 const session = require("express-session");
-const PostgresSessionStore = require("connect-session-knex");
+const connectSessionKnex = require("connect-session-knex");
 
-const knex_client = require("knex")({
+const knex = require("knex")({
   client: "pg",
   connection: {
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PW,
-    database: process.env.DB_NAME,
+    host: "localhost",
+    port: 5432,
+    user: "postgres",
+    password: "0000",
+    database: "test-db",
   },
+  debug: true,
+  pool: {
+    max: 10,
+  },
+  acquireConnectionTimeout: 60000,
 });
 
-const sessionStore = "";
+const KnexSessionStore = connectSessionKnex(session);
+
+const sessionStore = new KnexSessionStore({
+  knex,
+  tablename: "sessions",
+});
 
 const app = express();
 const port = 5500;
@@ -32,6 +42,7 @@ app.use(
     secret: "secret-key",
     resave: false,
     saveUninitialized: false,
+    store: sessionStore,
   })
 );
 
